@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SVG Clock Animation</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        svg {
+            width: 300px;
+            height: 300px;
+        }
+
+        .hand {
+            fill: none;
+            stroke: black;
+            stroke-linecap: round;
+            stroke-width: 5px;
+        }
+
+        .clock-face {
+            fill: #eee;
+            stroke: black;
+            stroke-width: 5px;
+        }
+    </style>
+</head>
+<body>
+    <svg viewBox="0 0 300 300">
+        <circle class="clock-face" cx="150" cy="150" r="130" />
+        <line class="hand hour-hand" x1="150" y1="150" x2="150" y2="80" />
+        <line class="hand minute-hand" x1="150" y1="150" x2="150" y2="50" />
+        <line class="hand second-hand" x1="150" y1="150" x2="150" y2="30" />
+    </svg>
+
+    <script>
+        const hourHand = document.querySelector('.hour-hand');
+        const minuteHand = document.querySelector('.minute-hand');
+        const secondHand = document.querySelector('.second-hand');
+
+        function updateClock() {
+            const now = new Date();
+
+            // Calculate angles for hands
+            const secondsAngle = now.getSeconds() * 6; // 360 degrees / 60 seconds
+            const minutesAngle = (now.getMinutes() + secondsAngle / 60) * 6; // Account for seconds
+            const hoursAngle = (now.getHours() % 12 + minutesAngle / 360) * 30; // 360 degrees / 12 hours
+
+            // Set rotation transform for hands
+            secondHand.setAttribute('transform', `rotate(${secondsAngle} 150 150)`);
+            minuteHand.setAttribute('transform', `rotate(${minutesAngle} 150 150)`);
+            hourHand.setAttribute('transform', `rotate(${hoursAngle} 150 150)`);
+
+            requestAnimationFrame(updateClock); // Schedule next animation frame
+        }
+
+        updateClock(); // Start the animation loop
+    </script>
+</body>
+</html>
