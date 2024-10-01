@@ -13,11 +13,23 @@ radius2 = 60
 num_lines = 100
 
 def draw_oval(control_points):
-    
-    num_ovals = 0  # number of ovals given the control_points
-    for no in range(num_ovals):
-        P0 = [] # Extract control points
-        # write down your code here.
+    center = control_points[-1]
+    x = center[0]
+    y = center[1]
+    radius1 = int(input("Enter the radius1: "))
+    radius2 = int(input("Enter the radius2: "))
+    num_lines = 100
+    for i in range(num_lines):
+        angle1 = i * 2 * math.pi / num_lines
+        angle2 = (i + 1) * 2 * math.pi / num_lines
+        a1 = x+radius1*math.cos(angle1)
+        b1 = y+radius2*math.sin(angle1)
+        a2 = x+radius1*math.cos(angle2)
+        b2 = y+radius2*math.sin(angle2)
+        cv2.line(img, (int(a1), int(b1)), (int(a2), int(b2)), (255, 255, 255))        
+        
+
+
 
 
 def mouse_callback(event, x, y, flags, param):
