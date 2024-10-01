@@ -10,12 +10,42 @@ cv2.namedWindow(windowName)
 control_points = []
 
 def draw_bresenham(control_points):
-    
-    num_lines = 0  # compute number of lines given the control_points
-    for nl in range(num_lines):
-        P0, P1 = [] # Extract control points
-        # Write your code here.
+    if len(control_points) < 2:
+        return
 
+    # Extract the two points
+    x1, y1 = control_points[-2]
+    x2, y2 = control_points[-1]
+
+    # Calculate dx, dy
+    dx = abs(x2 - x1)
+    dy = abs(y2 - y1)
+
+    # Determine the direction of step (either +1 or -1)
+    sx = 1 if x1 < x2 else -1
+    sy = 1 if y1 < y2 else -1
+
+    if dx > dy:
+        d = 2 * dy - dx
+        while x1 != x2:
+            img[y1, x1] = (255, 255, 255)  # Color the pixel white
+            if d > 0:
+                y1 += sy
+                d -= 2 * dx
+            x1 += sx
+            d += 2 * dy
+            cv2.imshow(windowName, img)
+    else:
+        # For steep lines where dy > dx
+        d = 2 * dx - dy
+        while y1 != y2:
+            img[y1, x1] = (255, 255, 255)  # Color the pixel white
+            if d > 0:
+                x1 += sx
+                d -= 2 * dy
+            y1 += sy
+            d += 2 * dx
+            cv2.imshow(windowName, img)
 
 def mouse_callback(event, x, y, flags, param):
     if event == cv2.EVENT_LBUTTONDOWN:

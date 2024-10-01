@@ -10,11 +10,24 @@ cv2.namedWindow(windowName)
 control_points = []
 
 def draw_rectangle(control_points):
+    if len(control_points) < 2:
+        return
+
+    # Extract the two points
+    x1, y1 = control_points[-2]
+    x2, y2 = control_points[-1]
+    x = min(x1, x2)
+    y = min(y1, y2)
+    width = abs(x2 - x1)
+    height = abs(y2 - y1)
+    cv2.line(img, (x, y), (x + width, y), (255, 255, 255))
+    cv2.line(img, (x, y), (x, y + height), (255, 255, 255))
+    cv2.line(img, (x + width, y), (x + width, y + height), (255, 255, 255))
+    cv2.line(img, (x, y + height), (x + width, y + height), (255, 255, 255))
+    cv2.imshow(windowName, img)
+
     
-    num_lines = 0  # compute number of lines given the control_points
-    for nl in range(num_lines):
-        P0, P1 = [] # Extract control points
-        # write down you code here.
+
 
 
 def mouse_callback(event, x, y, flags, param):
