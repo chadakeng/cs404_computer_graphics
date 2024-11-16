@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>WebGL - Textured Cube</title>
+    <style>
+        body { margin: 0; background-color: #eee; }
+        canvas { display: block; width: 600px; height: 400px; margin: auto; }
+    </style>
+</head>
+<body>
+    <canvas></canvas>
+    <!-- Include gl-matrix library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gl-matrix/2.8.1/gl-matrix-min.js"></script>
+    <script>
+    'use strict';
+
+    // Get the canvas element and initialize WebGL2 context
+    const canvas = document.querySelector('canvas');
+    let gl = canvas.getContext('webgl2');
+
+    // Fallback to WebGL1 if WebGL2 is not supported
+    if (!gl) {
+        console.warn('WebGL2 not supported, falling back on WebGL1');
+        gl = canvas.getContext('webgl');
+    } else {
+        console.log('WebGL2 supported');
+    }
+
+    // Resize the canvas to match the display size
+    function resizeCanvasToDisplaySize(canvas) {
+        const displayWidth  = canvas.clientWidth * window.devicePixelRatio;
+        const displayHeight = canvas.clientHeight * window.devicePixelRatio;
+
+        if (canvas.width  !== displayWidth || canvas.height !== displayHeight) {
+            canvas.width  = displayWidth;
+            canvas.height = displayHeight;
+        }
+    }
+
+    resizeCanvasToDisplaySize(canvas);
+
+    // Set the viewport to match the canvas size
+    gl.viewport(0, 0, canvas.width, canvas.height);
+
+    // Enable depth testing
+    gl.enable(gl.DEPTH_TEST);
+
+    // Set the clear color for the canvas (dark gray in this case) and clear the color buffer
+    gl.clearColor(0.2, 0.2, 0.2, 1.0); // Set clear color to #333
+
+    // Vertex shader source code
+    const vsGLSL = `#version 300 es
+    uniform mat4 uModelViewProjectionMatrix;
+    in vec3 position;
+    void main() {
+        gl_Position = uModelViewProjectionMatrix * vec4(position, 1.0);
+    }
+    `;
+
+    // Fragment shader source code
+    const fsGLSL = `#version 300 es
+    precision highp float;
+    out vec4 outColor;
+    void main() {
+        outColor = vec4(0, 1, 0.5, 1);
+    }
+    `;
+
+    // Create and compile the vertex shader
+    const vertexShader = gl.createShader(gl.VERTEX_SHADER);
+    gl.shaderSource(vertexShader, vsGLSL);
+    gl.compileShader(vertexShader);
+    if (!gl.getShaderParameter(vertexShader, gl.COMPILE_STATUS)) {
+        throw new Error(gl.getShaderInfoLog(vertexShader));
+    }
+
+    // Create and compile the fragment shader
+    const fragmentShader = gl.createShader(gl.FRAGMENT_SHADER);
+    gl.shaderSource(fragmentShader, fsGLSL);
+    gl.compileShader(fragmentShader);
+    if (!gl.getShaderParameter(fragmentShader, gl.COMPILE_STATUS)) {
+        throw new Error(gl.getShaderInfoLog(fragmentShader));
+    }
+
+    // Create a WebGL program and attach both shaders to it
+    const prg = gl.createProgram();
+    gl.attachShader(prg, vertexShader);
+    gl.attachShader(prg, fragmentShader);
+    gl.linkProgram(prg);
+    if (!gl.getProgramParameter(prg, gl.LINK_STATUS)) {
+        throw new Error(gl.getProgramInfoLog(prg));
+    }
+
+    // Get the location of the 'position' attribute in the shader program
+    const positionLoc = gl.getAttribLocation(prg, 'position');
+    if (positionLoc === -1) {
+        throw new Error('Failed to get the attribute location for position');
+    }
+
+    // Get the location of the uniform
+    const mvpMatrixLoc = gl.getUniformLocation(prg, 'uModelViewProjectionMatrix');
+    if (mvpMatrixLoc === -1) {
+        throw new Error('Failed to get the uniform location for uModelViewProjectionMatrix');
+    }
+
+    // Create the model, view, and projection matrices
+    const modelMatrix = mat4.create();
+    const viewMatrix = mat4.create();
+    const projectionMatrix = mat4.create();
+    const mvpMatrix = mat4.create();
+
+    // Set up the model matrix (apply rotation)
+    const rotationAxis = vec3.fromValues(0.5, 1, 0);
+    mat4.rotate(modelMatrix, modelMatrix, Math.PI / 4, rotationAxis);
+
+    // Set up the view matrix (camera)
+    const eye = vec3.fromValues(0, 0, 3); // Camera position
+    const center = vec3.fromValues(0, 0, 0); // Look at origin
+    const up = vec3.fromValues(0, 1, 0); // Up direction
+    mat4.lookAt(viewMatrix, eye, center, up);
+
+    // Set up the projection matrix
+    const aspect = canvas.clientWidth / canvas.clientHeight;
+    mat4.perspective(projectionMatrix, Math.PI / 4, aspect, 0.1, 100);
+
+    // Calculate the model-view-projection matrix
+    mat4.multiply(mvpMatrix, viewMatrix, modelMatrix);
+    mat4.multiply(mvpMatrix, projectionMatrix, mvpMatrix);
+
+    // Create a Vertex Array Object (VAO) to store state related to vertex input
+    const cubeVAO = gl.createVertexArray();
+    gl.bindVertexArray(cubeVAO);
+
+    // Define the vertex positions for the cube
+    const vertexPositions = new Float32Array([
+        // Front face
+        -0.5, -0.5,  0.5,  // Vertex 0
+         0.5, -0.5,  0.5,  // Vertex 1
+         0.5,  0.5,  0.5,  // Vertex 2
+        -0.5,  0.5,  0.5,  // Vertex 3
+
+        // Back face
+        -0.5, -0.5, -0.5,  // Vertex 4
+         0.5, -0.5, -0.5,  // Vertex 5
+         0.5,  0.5, -0.5,  // Vertex 6
+        -0.5,  0.5, -0.5,  // Vertex 7
+    ]);
+
+    // Define the indices for the triangles that make up each face of the cube
+    const indices = new Uint16Array([
+        // Front face
+        0, 1, 2,    0, 2, 3,
+        // Right face
+        1, 5, 6,    1, 6, 2,
+        // Back face
+        5, 4, 7,    5, 7, 6,
+        // Left face
+        4, 0, 3,    4, 3, 7,
+        // Top face
+        3, 2, 6,    3, 6, 7,
+        // Bottom face
+        4, 5, 1,    4, 1, 0,
+    ]);
+
+    // Create a buffer and bind it to the ARRAY_BUFFER target
+    const positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, vertexPositions, gl.STATIC_DRAW);
+
+    // Enable the 'position' attribute and describe its layout in the buffer
+    gl.enableVertexAttribArray(positionLoc);
+    gl.vertexAttribPointer(
+        positionLoc,  // Attribute location
+        3,            // Number of components per vertex attribute (x, y, z)
+        gl.FLOAT,     // Data type of each component
+        false,        // Whether to normalize the data
+        0,            // Stride (byte offset between consecutive attributes, 0 = tightly packed)
+        0             // Offset into the buffer where the attribute data starts
+    );
+
+    // Create an element array buffer for the indices
+    const indexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, indices, gl.STATIC_DRAW);
+
+    // Use the shader program
+    gl.useProgram(prg);
+
+    // Upload the MVP matrix to the shader
+    gl.uniformMatrix4fv(mvpMatrixLoc, false, mvpMatrix);
+
+    // Clear the color and depth buffers
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
+    // Bind VAO and draw the cube
+    gl.bindVertexArray(cubeVAO);
+    gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0);
+
+    </script>
+</body>
+</html>

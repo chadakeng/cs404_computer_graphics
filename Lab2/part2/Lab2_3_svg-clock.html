@@ -2,15 +2,20 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SVG Clock Animation</title>
     <style>
         body {
             margin: 0;
             display: flex;
-            justify-content: center;
+            justify-content: space-around;
             align-items: center;
             min-height: 100vh;
+            flex-wrap: wrap;
+        }
+
+        .clock-container {
+            text-align: center;
+            margin: 20px;
         }
 
         svg {
@@ -30,38 +35,105 @@
             stroke: black;
             stroke-width: 5px;
         }
+
+        .timezone-label {
+            font-family: Arial, sans-serif;
+            font-size: 20px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
-    <svg viewBox="0 0 300 300">
-        <circle class="clock-face" cx="150" cy="150" r="130" />
-        <line class="hand hour-hand" x1="150" y1="150" x2="150" y2="80" />
-        <line class="hand minute-hand" x1="150" y1="150" x2="150" y2="50" />
-        <line class="hand second-hand" x1="150" y1="150" x2="150" y2="30" />
-    </svg>
+    <!-- Local Time Clock -->
+    <div class="clock-container">
+        <svg viewBox="0 0 300 300">
+            <circle class="clock-face" cx="150" cy="150" r="130" />
+            <line class="hand hour-hand local-hour" x1="150" y1="150" x2="150" y2="80" />
+            <line class="hand minute-hand local-minute" x1="150" y1="150" x2="150" y2="50" />
+            <line class="hand second-hand local-second" x1="150" y1="150" x2="150" y2="30" />
+        </svg>
+        <div class="timezone-label">Local Time</div>
+    </div>
+
+    <!-- Clock for London -->
+    <div class="clock-container">
+        <svg viewBox="0 0 300 300">
+            <circle class="clock-face" cx="150" cy="150" r="130" />
+            <line class="hand hour-hand lon-hour" x1="150" y1="150" x2="150" y2="80" />
+            <line class="hand minute-hand lon-minute" x1="150" y1="150" x2="150" y2="50" />
+            <line class="hand second-hand lon-second" x1="150" y1="150" x2="150" y2="30" />
+        </svg>
+        <div class="timezone-label">London</div>
+    </div>
+
+    <!-- Clock for Tokyo -->
+    <div class="clock-container">
+        <svg viewBox="0 0 300 300">
+            <circle class="clock-face" cx="150" cy="150" r="130" />
+            <line class="hand hour-hand tokyo-hour" x1="150" y1="150" x2="150" y2="80" />
+            <line class="hand minute-hand tokyo-minute" x1="150" y1="150" x2="150" y2="50" />
+            <line class="hand second-hand tokyo-second" x1="150" y1="150" x2="150" y2="30" />
+        </svg>
+        <div class="timezone-label">Tokyo</div>
+    </div>
 
     <script>
-        const hourHand = document.querySelector('.hour-hand');
-        const minuteHand = document.querySelector('.minute-hand');
-        const secondHand = document.querySelector('.second-hand');
+        function updateClock(city, hourHand, minuteHand, secondHand, offset) {
+            let now = new Date();
 
-        function updateClock() {
-            const now = new Date();
+            // Adjust for the city's time zone offset, if provided
+            if (offset !== null && offset !== undefined) {
+                const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+                now = new Date(utc + (3600000 * offset));
+            }
 
             // Calculate angles for hands
-            const secondsAngle = now.getSeconds() * 6; // 360 degrees / 60 seconds
-            const minutesAngle = (now.getMinutes() + secondsAngle / 60) * 6; // Account for seconds
-            const hoursAngle = (now.getHours() % 12 + minutesAngle / 360) * 30; // 360 degrees / 12 hours
+            const seconds = now.getSeconds();
+            const minutes = now.getMinutes();
+            const hours = now.getHours();
+
+            const secondsAngle = seconds * 6; // 360 degrees / 60 seconds
+            const minutesAngle = (minutes + seconds / 60) * 6;
+            const hoursAngle = ((hours % 12) + minutes / 60) * 30; // 360 degrees / 12 hours
 
             // Set rotation transform for hands
             secondHand.setAttribute('transform', `rotate(${secondsAngle} 150 150)`);
             minuteHand.setAttribute('transform', `rotate(${minutesAngle} 150 150)`);
             hourHand.setAttribute('transform', `rotate(${hoursAngle} 150 150)`);
-
-            requestAnimationFrame(updateClock); // Schedule next animation frame
         }
 
-        updateClock(); // Start the animation loop
+        function updateAllClocks() {
+            // Local Time
+            updateClock(
+                'Local',
+                document.querySelector('.local-hour'),
+                document.querySelector('.local-minute'),
+                document.querySelector('.local-second'),
+                null // No offset needed for local time
+            );
+
+            // London (UTC+0)
+            updateClock(
+                'London',
+                document.querySelector('.lon-hour'),
+                document.querySelector('.lon-minute'),
+                document.querySelector('.lon-second'),
+                0
+            );
+
+            // Tokyo (+9 UTC)
+            updateClock(
+                'Tokyo',
+                document.querySelector('.tokyo-hour'),
+                document.querySelector('.tokyo-minute'),
+                document.querySelector('.tokyo-second'),
+                9
+            );
+
+            requestAnimationFrame(updateAllClocks); // Schedule next animation frame
+        }
+
+        updateAllClocks(); // Start the animation loop
     </script>
 </body>
 </html>

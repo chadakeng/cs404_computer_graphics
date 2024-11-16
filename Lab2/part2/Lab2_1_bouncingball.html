@@ -19,7 +19,7 @@
         let y = canvas.height / 2;
         let dx = 2; 
         let dy = -2; 
-        const radius = 10; 
+        let radius = 10; 
         let color = '#ff0000'; 
 
         function drawBall() {
@@ -38,10 +38,12 @@
             
             if (x + radius > canvas.width || x - radius < 0) {
                 dx = -dx; 
-                color = getRandomColor(); 
+                color = getRandomColor();
+                radius += 2; 
             }
             if (y + radius > canvas.height || y - radius < 0) {
                 dy = -dy; 
+                radius = Math.max(2, radius - 2);
             }
         }
 

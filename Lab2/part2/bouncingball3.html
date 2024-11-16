@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bouncing Ball Animation</title>
+    <style>
+        body { margin: 0; }
+        canvas { background-color: #ddd; }
+    </style>
+</head>
+<body>
+    <canvas id="myCanvas" width="400" height="300"></canvas>
+    <script>
+        const canvas = document.getElementById('myCanvas');
+        const ctx = canvas.getContext('2d');
+        class Ball {
+            constructor(x, y, dx, dy, radius, color) {
+                this.x = x;
+                this.y = y;
+                this.dx = dx;
+                this.dy = dy;
+                this.radius = radius;
+                this.color = color;
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.closePath();
+            }
+
+            update() {
+                this.x += this.dx;
+                this.y += this.dy;
+
+                // Collision detection with walls
+                if (this.x + this.radius > canvas.width || this.x - this.radius < 0) {
+                    this.dx = -this.dx;
+                    this.color = getRandomColor();
+                }
+                if (this.y + this.radius > canvas.height || this.y - this.radius < 0) {
+                    this.dy = -this.dy;
+                    this.color = getRandomColor();
+                }
+            }
+        }
+        const balls = [];
+        balls.push(new Ball(50, 50, 2, 2, 10, '#ff0000'));
+        balls.push(new Ball(100, 150, -3, 2, 15, '#00ff00'));
+        balls.push(new Ball(200, 100, 2, -3, 20, '#0000ff'));
+    
+
+        let x = canvas.width / 2; 
+        let y = canvas.height / 2;
+        let dx = 2; 
+        let dy = -2; 
+        let radius = 10; 
+        let color = '#ff0000'; 
+
+        function drawBall() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); 
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2); 
+            ctx.fillStyle = color;
+            ctx.fill();
+            ctx.closePath();
+        }
+
+        function getRandomColor() {
+            // Function to generate a random color (optional for color change on bounce)
+            const letters = '0123456789ABCDEF';
+            let color = '#';
+            for (let i = 0; i < 6; i++) {
+                color += letters[Math.floor(Math.random() * 16)];
+            }
+            return color;
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height); 
+            balls.forEach(ball => {
+                ball.draw();
+                ball.update();
+            });
+
+            requestAnimationFrame(animate); // Schedule next animation frame
+        }
+
+        animate(); // Start the animation loop
+    </script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SVG Clocks with Day and Month Hands</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            flex-wrap: wrap;
+            min-height: 100vh;
+        }
+
+        .clock-container {
+            text-align: center;
+            margin: 20px;
+        }
+
+        svg {
+            width: 300px;
+            height: 300px;
+        }
+
+        .hand {
+            fill: none;
+            stroke: black;
+            stroke-linecap: round;
+            stroke-width: 5px;
+        }
+
+        .clock-face {
+            fill: #eee;
+            stroke: black;
+            stroke-width: 5px;
+        }
+
+        .timezone-label {
+            font-family: Arial, sans-serif;
+            font-size: 20px;
+            margin-top: 10px;
+        }
+
+        .marker {
+            fill: black;
+            font-size: 12px;
+            text-anchor: middle;
+        }
+    </style>
+</head>
+<body>
+    <!-- Local Time Clock -->
+    <div class="clock-container">
+        <svg viewBox="0 0 300 300">
+            <circle class="clock-face" cx="150" cy="150" r="130" />
+            <line class="hand hour-hand local-hour" x1="150" y1="150" x2="150" y2="80" />
+            <line class="hand minute-hand local-minute" x1="150" y1="150" x2="150" y2="50" />
+            <line class="hand second-hand local-second" x1="150" y1="150" x2="150" y2="30" />
+        </svg>
+        <div class="timezone-label">Local Time</div>
+    </div>
+
+    <!-- Clock for London -->
+    <div class="clock-container">
+        <svg viewBox="0 0 300 300">
+            <circle class="clock-face" cx="150" cy="150" r="130" />
+            <line class="hand hour-hand lon-hour" x1="150" y1="150" x2="150" y2="80" />
+            <line class="hand minute-hand lon-minute" x1="150" y1="150" x2="150" y2="50" />
+            <line class="hand second-hand lon-second" x1="150" y1="150" x2="150" y2="30" />
+        </svg>
+        <div class="timezone-label">London</div>
+    </div>
+
+    <!-- Clock for Tokyo -->
+    <div class="clock-container">
+        <svg viewBox="0 0 300 300">
+            <circle class="clock-face" cx="150" cy="150" r="130" />
+            <line class="hand hour-hand tokyo-hour" x1="150" y1="150" x2="150" y2="80" />
+            <line class="hand minute-hand tokyo-minute" x1="150" y1="150" x2="150" y2="50" />
+            <line class="hand second-hand tokyo-second" x1="150" y1="150" x2="150" y2="30" />
+        </svg>
+        <div class="timezone-label">Tokyo</div>
+    </div>
+
+    <!-- Clock with Day and Month Hands -->
+    <div class="clock-container">
+        <svg viewBox="0 0 300 300">
+            <circle class="clock-face" cx="150" cy="150" r="130" />
+
+            <g id="day-markers">
+            </g>
+
+            <g id="month-markers">
+            </g>
+
+            <!-- Hands -->
+            <line class="hand month-hand" x1="150" y1="150" x2="150" y2="40" stroke-width="4" />
+            <line class="hand day-hand" x1="150" y1="150" x2="150" y2="20" stroke-width="2" />
+        </svg>
+        <div class="timezone-label">Date and Month</div>
+    </div>
+
+    <script>
+        function updateClock(city, hourHand, minuteHand, secondHand, offset) {
+            let now = new Date();
+
+            // Adjust for the city's time zone offset, if provided
+            if (offset !== null && offset !== undefined) {
+                const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+                now = new Date(utc + (3600000 * offset));
+            }
+
+            // Calculate angles for hands
+            const seconds = now.getSeconds();
+            const minutes = now.getMinutes();
+            const hours = now.getHours();
+
+            const secondsAngle = seconds * 6; // 360 degrees / 60 seconds
+            const minutesAngle = (minutes + seconds / 60) * 6;
+            const hoursAngle = ((hours % 12) + minutes / 60) * 30; // 360 degrees / 12 hours
+
+            // Set rotation transform for hands
+            secondHand.setAttribute('transform', `rotate(${secondsAngle} 150 150)`);
+            minuteHand.setAttribute('transform', `rotate(${minutesAngle} 150 150)`);
+            hourHand.setAttribute('transform', `rotate(${hoursAngle} 150 150)`);
+        }
+
+        function updateAllClocks() {
+            // Local Time
+            updateClock(
+                'Local',
+                document.querySelector('.local-hour'),
+                document.querySelector('.local-minute'),
+                document.querySelector('.local-second'),
+                null // No offset needed for local time
+            );
+
+            // London (UTC+0)
+            updateClock(
+                'London',
+                document.querySelector('.lon-hour'),
+                document.querySelector('.lon-minute'),
+                document.querySelector('.lon-second'),
+                0
+            );
+
+            // Tokyo (+9 UTC)
+            updateClock(
+                'Tokyo',
+                document.querySelector('.tokyo-hour'),
+                document.querySelector('.tokyo-minute'),
+                document.querySelector('.tokyo-second'),
+                9
+            );
+
+            requestAnimationFrame(updateAllClocks); // Schedule next animation frame
+        }
+
+        // Function to create markers for days and months
+        function createMarkers() {
+            const dayMarkers = document.getElementById('day-markers');
+            const monthMarkers = document.getElementById('month-markers');
+
+            // Create day markers (1-31)
+            for (let i = 1; i <= 31; i++) {
+                const angle = (i / 31) * 360 - 90; // Adjust so that 1 is at the top
+                const x = 150 + 120 * Math.cos(angle * Math.PI / 180);
+                const y = 150 + 120 * Math.sin(angle * Math.PI / 180) + 4; // Adjust y position slightly
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', x);
+                text.setAttribute('y', y);
+                text.setAttribute('class', 'marker');
+                text.textContent = i;
+                dayMarkers.appendChild(text);
+            }
+
+            // Create month markers (1-12)
+            for (let i = 1; i <= 12; i++) {
+                const angle = (i / 12) * 360 - 90; // Adjust so that 1 is at the top
+                const x = 150 + 100 * Math.cos(angle * Math.PI / 180);
+                const y = 150 + 100 * Math.sin(angle * Math.PI / 180) + 4; // Adjust y position slightly
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', x);
+                text.setAttribute('y', y);
+                text.setAttribute('class', 'marker');
+                text.textContent = i;
+                monthMarkers.appendChild(text);
+            }
+        }
+
+        function updateDateClock() {
+            const now = new Date();
+
+            const day = now.getDate();
+            const month = now.getMonth() + 1; // getMonth() returns 0-11
+
+            // Calculate angles for hands
+            const dayAngle = ((day - 1) / 31) * 360; // Day hand
+            const monthAngle = ((month - 1) / 12) * 360; // Month hand
+
+            document.querySelector('.day-hand').setAttribute('transform', `rotate(${dayAngle} 150 150)`);
+            document.querySelector('.month-hand').setAttribute('transform', `rotate(${monthAngle} 150 150)`);
+
+            requestAnimationFrame(updateDateClock); // Schedule next frame
+        }
+
+        createMarkers();
+
+        updateAllClocks();
+        updateDateClock();
+    </script>
+</body>
+</html>
